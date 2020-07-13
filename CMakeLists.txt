@@ -35,11 +35,6 @@ ament_export_dependencies(rosidl_default_runtime)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(my_node src/my_node.cpp src/StubNode.cpp)
-ament_target_dependencies(my_node rclcpp std_msgs)
-
-add_executable(algoRun src/algoRun.cpp src/AlgoNode.cpp)
-ament_target_dependencies(algoRun rclcpp std_msgs)
 add_executable(talker src/publisher_member_function.cpp)
 ament_target_dependencies(talker rclcpp std_msgs)
 add_executable(listener src/subscriber_member_function.cpp)
@@ -55,17 +50,10 @@ include_directories(
   #$<INSTALL_INTERFACE:include>)
 
 install(TARGETS
-  algoRun
-  my_node
   talker
   listener
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
-
-rosidl_target_interfaces(my_node
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
-rosidl_target_interfaces(algoRun
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
