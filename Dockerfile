@@ -10,7 +10,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 
 # slam_toolbox
 RUN mkdir -p colcon_ws/src
-RUN cd colcon_ws/src && git clone -b eloquent-devel https://github.com/ManishAwale/my_package.git
+RUN cd colcon_ws/src && git clone https://github.com/ManishAwale/my_package.git
 
 RUN source /opt/ros/eloquent/setup.bash \
     && cd colcon_ws \
