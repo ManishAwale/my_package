@@ -1,23 +1,42 @@
-FROM ros:eloquent-ros-base-bionic
+FROM osrf/ros:eloquent-desktop
 
-# USE BASH
-SHELL ["/bin/bash", "-c"]
+# install ros build tools
+RUN apt-get update && apt-get install -y \
+      python3-colcon-common-extensions && \
+    rm -rf /var/lib/apt/lists/*
 
-# RUN LINE BELOW TO REMOVE debconf ERRORS (MUST RUN BEFORE ANY apt-get CALLS)
-RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+# clone ros package repo
+ENV ROS_WS /opt/ros_ws
+RUN mkdir -p $ROS_WS/src
+WORKDIR $ROS_WS
+RUN git -C src clone \
+      https://github.com/ManishAwale/my_package.git
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends apt-utils
+# install ros package dependencies
+RUN apt-get update && \
+    rosdep update && \
+    rosdep install -y \
+      --from-paths \
+        src/my_package \
+      --ignore-src && \
+    rm -rf /var/lib/apt/lists/*
 
-# slam_toolbox
-RUN mkdir -p colcon_ws/src
-RUN cd colcon_ws/src && git clone https://github.com/ManishAwale/my_package.git
+# build ros package source
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
+    colcon build \
+      --packages-select \
+        my_package \
+      --cmake-args \
+        -DCMAKE_BUILD_TYPE=Release
 
-RUN source /opt/ros/eloquent/setup.bash \
-    && cd colcon_ws \
-    && rosdep update \
-    && rosdep install -y -r --from-paths src --ignore-src --rosdistro=eloquent -y
+# copy ros package install via multi-stage
+FROM osrf/ros:eloquent-desktop
+ENV ROS_WS /opt/ros_ws
+COPY --from=0  $ROS_WS/install $ROS_WS/install
 
-RUN source /opt/ros/eloquent/setup.bash \
-    && cd colcon_ws/ \
-    && colcon build  --cmake-args=-DCMAKE_BUILD_TYPE=Release \
-    
+# source ros package from entrypoint
+RUN sed --in-place --expression \
+      '$isource "$ROS_WS/install/setup.bash"' \
+      /ros_entrypoint.sh
+
+CMD ["bash"]
